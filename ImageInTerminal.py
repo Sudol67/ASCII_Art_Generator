@@ -36,8 +36,6 @@ def imageTerminalShow(segmented_image, K):
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     print("\n".join("".join(row) for row in char_matrix))
 
-
-
 #fileDialog
 documents_folder = os.path.join(os.path.expanduser("~"), "Documents")
 
