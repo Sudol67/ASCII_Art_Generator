@@ -58,7 +58,7 @@ def changeSize(input_photo):
 
     height, width = input_photo.shape[:2]
     if width > 200 or height > 200:
-        max_size = 200
+        max_size = 100
         aspect_ratio = 2
         scale = max_size / max(height, width)
         new_width = int(width * scale * aspect_ratio)        
@@ -83,7 +83,7 @@ def image_manipulation(image):
     twoDimage = np.float32(twoDimage)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 10
+    K = 3
     attempts = 10
 
     ret, label, center = cv.kmeans(twoDimage, K, None, criteria, attempts, cv.KMEANS_PP_CENTERS)
@@ -100,7 +100,7 @@ def image_show(final_image):
     plt.show()
 
 def imageTerminalShow(segmented_image):
-    ascii_chars = " .-=:+*#%@"
+    ascii_chars = " .-=:+*#%█"
     char_matrix = np.array([[ascii_chars[pixel * (len(ascii_chars) - 1) // 255] for pixel in row] for row in segmented_image])
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     print("\n".join("".join(row) for row in char_matrix))
@@ -138,4 +138,7 @@ while flag == 1:
             print(f"\033[31mError, selected option is not recognised. Try again...\033[0m")
 
 
-# Poprawić zabezpieczenia, dodać kolory
+# Poprawić zabezpieczenia, dodać kolory, dodać try catch aby sprwdzić wersje, poprawić wybór obrazu, dodać informację o otwieraniu okna wyboru, po wykonaniu akcji czyści terminal
+# by nie było widac ze to pętla o że wyświetla pod sobą kolejne menu
+
+# Dodać obsługę filmików, może gifów
