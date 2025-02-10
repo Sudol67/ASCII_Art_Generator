@@ -12,7 +12,7 @@ Basic functionality:
 Menu:
 1. Loading chosen image. This section performes basic path and file read. This part uses tkinter and window for user convinence. PIL library has been used in this part due to special for my country letters not supported by basic path reading.
 2. Cropping image - Due to terminal having limited character space, loeaded image needs to be scaled. Program checks if the image exceeds 200px limit and if so, scaling is performed. At this point width compensation is also performed. Due to characters being on average two times higher than their width, Image needs to be streched to maintain proportions.
-3. Segmentation - This part performs image manipulation. It creates B&W version of the input image. Then image segmentation is performed. Segmentation is based on the article by Gaurav Maindola from [this site]([https://pages.github.com/](https://machinelearningknowledge.ai/image-segmentation-in-python-opencv/)). The copy of the article is saved as .pdf file in this repository.
+3. Segmentation - This part performs image manipulation. It creates B&W version of the input image. Then image segmentation is performed. Segmentation is based on the article by Gaurav Maindola from [this site](https://machinelearningknowledge.ai/image-segmentation-in-python-opencv/). The copy of the article is saved as .pdf file in this repository.
 4. Terminal print
 5. matplotlibr print
 
