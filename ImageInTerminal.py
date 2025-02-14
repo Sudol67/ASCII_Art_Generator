@@ -8,6 +8,10 @@ import os
 from pathlib import Path
 from PIL import Image
 
+isLoaded = False
+isCropped = False
+isSegmented = False
+
 def imageLoad():
     documents_folder = os.path.join(os.path.expanduser("~"), "Documents")
 
@@ -83,7 +87,7 @@ def image_manipulation(image):
     twoDimage = np.float32(twoDimage)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 3
+    K = 6
     attempts = 10
 
     ret, label, center = cv.kmeans(twoDimage, K, None, criteria, attempts, cv.KMEANS_PP_CENTERS)
@@ -100,7 +104,7 @@ def image_show(final_image):
     plt.show()
 
 def imageTerminalShow(segmented_image):
-    ascii_chars = " .-=:+*#%█"
+    ascii_chars = " .-=:+*#%@"
     char_matrix = np.array([[ascii_chars[pixel * (len(ascii_chars) - 1) // 255] for pixel in row] for row in segmented_image])
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     print("\n".join("".join(row) for row in char_matrix))
@@ -119,11 +123,25 @@ while flag == 1:
 
     match number:
         case '1':
+            isLoaded = False
+            isCropped = False
+            isSegmented = False
+            print("\033[32mOpening new window, please wait...\033[0m")
             input_image = imageLoad()
             currentPhoto = input_image
+            isLoaded = True
         case '2':
-            cropped_image = changeSize(currentPhoto)
-            currentPhoto = cropped_image
+            if isLoaded == True and isCropped == False and isSegmented == False:
+                cropped_image = changeSize(currentPhoto)
+                currentPhoto = cropped_image
+                isCropped = True
+            else:
+                if isLoaded == False:
+                    print(f"\033[31mImage is not loaded.\033[0m")
+                elif isCropped:
+                    print(f"\033[31mImage is already cropped.\033[0m")
+                elif isSegmented:
+                    print(f"\033[31mImage is already segmented, can't cropp it.\033[0m")
         case '3':
             segmentedImage = image_manipulation(currentPhoto)
             currentPhoto = segmentedImage
@@ -138,7 +156,7 @@ while flag == 1:
             print(f"\033[31mError, selected option is not recognised. Try again...\033[0m")
 
 
-# Poprawić zabezpieczenia, dodać kolory, dodać try catch aby sprwdzić wersje, poprawić wybór obrazu, dodać informację o otwieraniu okna wyboru, po wykonaniu akcji czyści terminal
-# by nie było widac ze to pętla o że wyświetla pod sobą kolejne menu
+# Poprawić zabezpieczenia, dodać kolory, poprawić wybór obrazu, po wykonaniu akcji czyści terminal
+# by nie było widac ze to pętla i że wyświetla pod sobą kolejne menu, Poprawić kontrast by obraz był bardziej widoczny, poprawić znaki ASCII
 
 # Dodać obsługę filmików, może gifów
