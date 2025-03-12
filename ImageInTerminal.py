@@ -8,6 +8,10 @@ import os
 from pathlib import Path
 from PIL import Image
 
+isLoaded = False
+isCropped = False
+isSegmented = False
+
 def imageLoad():
     documents_folder = os.path.join(os.path.expanduser("~"), "Documents")
 
@@ -42,7 +46,7 @@ def imageLoad():
                 input_image = None
         
         height, width = input_image.shape[:2]
-        print("Size of the image:")
+        print("\033[34mSize of the image:\033[0m")
         print(f"- Width: {width} px")
         print(f"- Height: {height} px")
 
@@ -58,7 +62,7 @@ def changeSize(input_photo):
 
     height, width = input_photo.shape[:2]
     if width > 200 or height > 200:
-        max_size = 200
+        max_size = 100
         aspect_ratio = 2
         scale = max_size / max(height, width)
         new_width = int(width * scale * aspect_ratio)        
@@ -66,9 +70,9 @@ def changeSize(input_photo):
         resized_image = cv.resize(input_photo, (new_width, new_height), interpolation=cv.INTER_AREA)
 
         heightChanged, widthChanged = resized_image.shape[:2]
-        print("\nNowe wymiary zdjęcia:")
-        print(f"Szerokosc: {heightChanged} px")
-        print(f"Wysokosc: {widthChanged} px")
+        print("\033[34mNew image size:\033[0m")
+        print(f"- Width: {heightChanged} px")
+        print(f"- Height: {widthChanged} px")
 
         return resized_image
     else:
@@ -79,12 +83,16 @@ def changeSize(input_photo):
 def image_manipulation(image):
     grey_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY) #change to greyscale
 
-    twoDimage = grey_image.reshape((-1, 1))
+    alpha = 1.5  # (>1 higher contrast, <1 lower)
+    beta = 0
+    contrast_image = cv.convertScaleAbs(grey_image, alpha=alpha, beta=beta)
+
+    twoDimage = contrast_image.reshape((-1, 1))
     twoDimage = np.float32(twoDimage)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 10
-    attempts = 10
+    K = 6
+    attempts = 8
 
     ret, label, center = cv.kmeans(twoDimage, K, None, criteria, attempts, cv.KMEANS_PP_CENTERS)
     center = np.uint8(center)
@@ -119,23 +127,48 @@ while flag == 1:
 
     match number:
         case '1':
+            isLoaded = False
+            isCropped = False
+            isSegmented = False
+            os.system('cls')
+            print("\033[32mOpening new window, please wait...\033[0m")
             input_image = imageLoad()
             currentPhoto = input_image
+            isLoaded = True
         case '2':
-            cropped_image = changeSize(currentPhoto)
-            currentPhoto = cropped_image
+            os.system('cls')
+            if isLoaded == True and isCropped == False and isSegmented == False:
+                cropped_image = changeSize(currentPhoto)
+                currentPhoto = cropped_image
+                isCropped = True
+            else:
+                if isLoaded == False:
+                    print(f"\033[31mImage is not loaded.\033[0m")
+                elif isCropped:
+                    print(f"\033[31mImage is already cropped.\033[0m")
+                elif isSegmented:
+                    print(f"\033[31mImage is already segmented, can't cropp it.\033[0m")
         case '3':
+            os.system('cls')
+            print("\033[32mImage has been prepared for the next step.\033[0m")
             segmentedImage = image_manipulation(currentPhoto)
             currentPhoto = segmentedImage
         case '4':
+            os.system('cls')
             imageTerminalShow(currentPhoto)
         case '5':
+            os.system('cls')
             image_show(currentPhoto)
         case 'X' | 'x':
-            print("See you soon...\nClosing program...")
+            os.system('cls')
+            print(f"\033[31mSee you soon...\nClosing program...\033[0m")
             exit(0)
         case _:
             print(f"\033[31mError, selected option is not recognised. Try again...\033[0m")
 
 
-# Poprawić zabezpieczenia, dodać kolory
+# Poprawić zabezpieczenia, poprawić wybór obrazu
+# Poprawić kontrast by obraz był bardziej widoczny, poprawić znaki ASCII
+# Poprawienie tego aby można było modyfikować rozmiar obrazu w trakcie działania bez ponownego wczytania
+
+# Dodać obsługę filmików, może gifów
