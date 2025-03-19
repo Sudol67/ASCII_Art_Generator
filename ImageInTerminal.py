@@ -11,6 +11,7 @@ from PIL import Image
 isLoaded = False
 isCropped = False
 isSegmented = False
+asciiArt = ""
 
 def imageLoad():
     documents_folder = os.path.join(os.path.expanduser("~"), "Documents")
@@ -18,6 +19,7 @@ def imageLoad():
     root = tk.Tk()
     root.attributes("-topmost", True)  # Force window to stay on top
     root.withdraw()
+
 
     file_path = filedialog.askopenfilename(
         title="Choose your image",
@@ -61,8 +63,8 @@ def changeSize(input_photo):
         return
 
     height, width = input_photo.shape[:2]
-    if width > 200 or height > 200:
-        max_size = 100
+    if width > 150 or height > 150:
+        max_size = int(input("Enter maximum size of the picture (recomended 100 on smaller screens): "))
         aspect_ratio = 2
         scale = max_size / max(height, width)
         new_width = int(width * scale * aspect_ratio)        
@@ -81,18 +83,31 @@ def changeSize(input_photo):
 
 
 def image_manipulation(image):
-    grey_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY) #change to greyscale
+    grey_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY) 
 
-    alpha = 1.5  # (>1 higher contrast, <1 lower)
-    beta = 0
-    contrast_image = cv.convertScaleAbs(grey_image, alpha=alpha, beta=beta)
+    clahe = cv.createCLAHE(clipLimit=5.0, tileGridSize=(8, 8))
+    contrast_image = clahe.apply(grey_image)
 
-    twoDimage = contrast_image.reshape((-1, 1))
+    gamma_black = 1.5
+    lookUpTable_black = np.array([((i / 255.0) ** gamma_black) * 255 for i in range(256)]).astype("uint8")
+    deep_black_image = cv.LUT(contrast_image, lookUpTable_black)
+
+    threshold_value = 200
+    mask = deep_black_image > threshold_value
+
+    gamma_white = 0.4
+    lookUpTable_white = np.array([((i / 255.0) ** gamma_white) * 255 for i in range(256)]).astype("uint8")
+    brightened_part = cv.LUT(deep_black_image, lookUpTable_white)
+
+    final_image = deep_black_image.copy()
+    final_image[mask] = brightened_part[mask]
+
+    twoDimage = final_image.reshape((-1, 1))
     twoDimage = np.float32(twoDimage)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 6
-    attempts = 8
+    K = int(input("Choose K value (the amount of subgroups picture is segmented): "))
+    attempts = 25
 
     ret, label, center = cv.kmeans(twoDimage, K, None, criteria, attempts, cv.KMEANS_PP_CENTERS)
     center = np.uint8(center)
@@ -108,10 +123,31 @@ def image_show(final_image):
     plt.show()
 
 def imageTerminalShow(segmented_image):
-    ascii_chars = " .-=:+*#%@"
+    global asciiArt
+    ascii_chars = " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
+    #ascii_chars = " .-=:+*#%@"
     char_matrix = np.array([[ascii_chars[pixel * (len(ascii_chars) - 1) // 255] for pixel in row] for row in segmented_image])
     np.set_printoptions(threshold=np.inf, linewidth=np.inf)
-    print("\n".join("".join(row) for row in char_matrix))
+    asciiArt = "\n".join("".join(row) for row in char_matrix)
+    print(asciiArt)
+
+def save_to_file():
+    global asciiArt
+
+    if not asciiArt:
+        print("No ASCII art to save.")
+        return
+
+    root1 = tk.Tk()
+    root1.withdraw()
+    file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")], title="Choose place to save the file")
+
+    if file_path:
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(asciiArt)
+        print(f"ASCII Art saved to: {file_path}")
+    else:
+        print("Saving aborted")
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 print("\033[34mWelcome to ShellPhoto app\033[0m")
@@ -122,7 +158,7 @@ number = ""
 currentPhoto = None
 flag = 1
 while flag == 1:
-    print("\nChoose number from the menu below and confirm with Enter:\n1.Load photo\n2.Change photo size\n3.Photo correction\n4.Shell print\n5.Show current loaded photo state\nX.Close app")
+    print("\nChoose number from the menu below and confirm with Enter:\n1.Load photo\n2.Change photo size\n3.Photo correction\n4.Shell print\n5.Show current loaded photo state\n6.Save to .txt file\nX.Close app")
     number = str(input("Your choice: "))
 
     match number:
@@ -159,6 +195,8 @@ while flag == 1:
         case '5':
             os.system('cls')
             image_show(currentPhoto)
+        case '6':
+            save_to_file()
         case 'X' | 'x':
             os.system('cls')
             print(f"\033[31mSee you soon...\nClosing program...\033[0m")
@@ -168,7 +206,5 @@ while flag == 1:
 
 
 # Poprawić zabezpieczenia, poprawić wybór obrazu
-# Poprawić kontrast by obraz był bardziej widoczny, poprawić znaki ASCII
-# Poprawienie tego aby można było modyfikować rozmiar obrazu w trakcie działania bez ponownego wczytania
 
 # Dodać obsługę filmików, może gifów
